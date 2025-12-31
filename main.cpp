@@ -5,6 +5,9 @@
 #include <QQuickWindow>
 #include <QTimer>
 #include <QDir>
+#include <QFileDialog>
+#include <QFileInfo>
+#include <QStandardPaths>
 #include "PhotoBackend.h"
 #include "SettingsBackend.h"
 #include "utils.h"
@@ -49,16 +52,45 @@ int main(int argc, char *argv[])
     int screen_width = utils.get_width();
     int screen_height = utils.get_heigth();
 
+
+    //读取当前配置
+    QVariantMap current_setting = settingsBackend.loadSettings();
+    // qDebug() << "当前配置：" << current_setting["wallpaperFolder"] << "\n";
+    // qDebug() << "当前配置serverUrl：" << current_setting["serverUrl"] << "\n";
+    // qDebug() << "当前配置token：" << current_setting["token"] << "\n";
+    // qDebug() << "当前配置updateInterval：" << current_setting["updateInterval"] << "\n";
+
     #ifdef Q_OS_WIN
         #define APP_POSITION_X (screen_width - (1.5 * APP_WIDTH))
         #define APP_POSITION_Y (screen_height - (100 + APP_HEIGTH))
+        QString wallpaperFolder = current_setting.value("wallpaperFolder").toString();
         QString init_wallpaper_folder = photoBackend.get_application_dir() + "/myWallPapers";
     #endif
 
     #ifdef Q_OS_MACOS
         #define APP_POSITION_X    screen_width - (1.5 * APP_WIDTH)
         #define APP_POSITION_Y 30
-        QString init_wallpaper_folder = QDir::homePath() + "/documents/myWallPapers";
+
+        QString wallpaperFolder = current_setting.value("wallpaperFolder").toString();
+        QString sUrl = current_setting.value("serverUrl").toString();
+        QString tk = current_setting.value("token").toString();
+
+        if (!utils.hasPermission(wallpaperFolder)) {
+            // 没权限 或 从未选择过
+            wallpaperFolder = QFileDialog::getExistingDirectory(
+                nullptr,
+                "选择壁纸文件夹",
+                QStandardPaths::writableLocation(QStandardPaths::PicturesLocation)
+                );
+
+            if (!wallpaperFolder.isEmpty()) {
+                settingsBackend.validateAndSave(wallpaperFolder, sUrl, tk,  1);
+            }
+           // QString init_wallpaper_folder = wallpaperFolder;
+
+        }
+
+    QString init_wallpaper_folder = wallpaperFolder;
     #endif
 
     photoBackend.SET_APP_WIDTH(APP_WIDTH);
@@ -82,14 +114,7 @@ int main(int argc, char *argv[])
 
 
     //配置默认参数
-    QVariantMap current_setting = settingsBackend.loadSettings();
-
-    // qDebug() << "当前配置：" << current_setting["wallpaperFolder"] << "\n";
-    // qDebug() << "当前配置serverUrl：" << current_setting["serverUrl"] << "\n";
-    // qDebug() << "当前配置token：" << current_setting["token"] << "\n";
-    // qDebug() << "当前配置updateInterval：" << current_setting["updateInterval"] << "\n";
-
-    QString wallpaperFolder = current_setting.value("wallpaperFolder").toString();
+    //QString wallpaperFolder = current_setting.value("wallpaperFolder").toString();
     QString serverUrl = current_setting.value("serverUrl").toString();
     QString token = current_setting.value("token").toString();
     QString updateInterval = current_setting.value("updateInterval").toString();
@@ -143,7 +168,7 @@ int main(int argc, char *argv[])
     #endif
     #ifdef Q_OS_MACOS
 
-        QString icon_path = QDir::homePath() +"/applications/myWallPaper/resources/app_icon.png";
+        QString icon_path = QCoreApplication::applicationDirPath() + "/../Resources/app_icon.png";
 
     #endif
 

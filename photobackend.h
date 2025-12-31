@@ -13,6 +13,7 @@
 #include <QUrl>
 #include <QProcess>
 #include <QTimer>
+#include <QMessageBox>
 
 // 照片数据模型
 class PhotoModel : public QAbstractListModel
@@ -182,6 +183,7 @@ private:
     //APP POSITION
     int app_position_x;
     int app_position_y;
+
 
 };
 

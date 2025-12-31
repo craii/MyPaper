@@ -30,3 +30,13 @@ int Utils::get_heigth()
 {
     return this->m_screen_height;
 }
+
+bool Utils::hasPermission(const QString &path)
+{
+    if (path.isEmpty())
+        return false;
+
+    QFileInfo info(path);
+
+    return info.exists() && info.isDir() && info.isReadable();
+}

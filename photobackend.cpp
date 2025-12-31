@@ -5,6 +5,11 @@
 #include <QFileInfo>
 #include <QImageReader>
 #include <QDateTime>
+#include <QString>
+#include <QUrl>
+#include <QProcess>
+#include <QMessageBox>
+
 
 #ifdef Q_OS_WIN
 #include <windows.h>
@@ -456,14 +461,37 @@ void PhotoBackend::setWallPaper(const QString &path_to_image) const
                              ).arg(local_path);
 
         QStringList args;
+
         args << "-e" << script;
 
         int exitCode = QProcess::execute("osascript", args);
 
-        if (exitCode != 0)
+        qDebug() << "macOS osascript Exit Code:" << exitCode;
+
+
+        if (exitCode != 0) {
             qDebug() << "macOS：设置壁纸失败";
-        else
+
+            // 使用 Qt 显示权限提示对话框
+            //这里不一定是权限问题，也有可能是图片路径不对，
+            //但其他代码中似乎已经没有路径问题出现的可能，就默认是权限问题吧
+            QMessageBox msgBox;
+            msgBox.setIcon(QMessageBox::Warning);
+            msgBox.setWindowTitle("需要授权");
+            msgBox.setText("应用需要自动化权限来设置壁纸");
+            msgBox.setInformativeText(
+                "请前往：\n"
+                "系统偏好设置 > 安全性与隐私 > 隐私 > 自动化\n"
+                "勾选允许 Wallpaper 控制 System Events"
+                );
+            msgBox.setStandardButtons(QMessageBox::Ok);
+            msgBox.exec();
+
+        }
+        else{
             qDebug() << "macOS：设置壁纸成功";
+        }
+
     #endif
 
 }

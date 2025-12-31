@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QGuiApplication>
 #include <QScreen>
+#include <QFileInfo>
 
 class Utils:public QObject
 {
@@ -19,6 +20,7 @@ public:
     void get_screen_size();
     int get_width();
     int get_heigth();
+    bool hasPermission(const QString &path);
 
 
 private:
