@@ -2,10 +2,9 @@
 <img width="251" height="253" alt="app_icon" src="https://github.com/user-attachments/assets/1d66cb8a-e14d-498d-be60-eed3e6eedb91" />
 
 
-wallpapaer app Pap.er temporary fix
+wallpaper app Pap.er temporary fix
 
-#做这个东西的
-出于对 Pap.er app 的喜爱。升级 macOS 26后，因崩溃而无法继续使用的 Pap.er ，给开发者 发送邮件  也如石沉大海，没有回应。 因而写了临时替代版。当前公开版本仅能读取本地壁纸。
+# 做这个东西是出于对 Pap.er app 的喜爱。升级 macOS 26后，因崩溃而无法继续使用的 Pap.er ，给开发者 发送邮件  也如石沉大海，没有回应。 因而写了临时替代版。当前公开版本仅能读取本地壁纸。
 <img width="1509" height="982" alt="macos_1" src="https://github.com/user-attachments/assets/dbd40a68-a00b-4ba0-8bdd-4511113559b5" />
 <img width="1506" height="982" alt="macos_3" src="https://github.com/user-attachments/assets/0db06e33-8e9b-462f-82e1-cdb8174fd9d3" />
 <img width="1512" height="982" alt="macos_2" src="https://github.com/user-attachments/assets/1a27485d-5c3d-4642-a5a4-3c2538e703b3" />
