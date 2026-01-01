@@ -29,16 +29,19 @@ wallpapaer app Pap.er temporary fix
 **拉取仓库**
 <br/>
 ` git clone https://github.com/craii/MyPaper.git && cd MyPaper `
-
+<br/>
 
 **配置and 编译 release 版本：**
+<br/>
 ` cmake -S . -B build-release -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release `
 `cmake --build build-release`
-
+<br/>
 编译成功后，生成的程序在这里  MyPaper \build-release\wallpaper.exe 。但注意，这时候的 wallpaper.exe 只能在自己的电脑中运行，因为运行必须的 QT链接库都没有带。如果让它能够在其他电脑中运行，需要将 wallpaper.exe  和 必要的库一起打包。
 
 **打包 Portable 版本：**
+<br/>
 `windeployqt wallpaper.exe`
+<br/>
 
 **最后一步：**
 
@@ -50,39 +53,40 @@ wallpapaer app Pap.er temporary fix
 检查QT版本：
 
 安装 QT 和 cmake 后，检查QT的版本 ，版本号应该是 6.10.1 或更高：
+<br/>
 `qtpaths --qt-version`
-
+<br/>
 如果你之前安装过 anaconda 或者 pyside6/pyqt等，上述命令的运行结果可能是 5.xx.x ,此时，需要额外执行操作:
 在 `~/.bash_profile` 中添加
+<br/>
 ` export PATH=/Users/eliascheung/Qt/6.10.1/macos/bin:$PATH`
+<br/>
 
 **拉取仓库:**
 首先，我们切换到 documents 文件夹，这样方便我们在finder中找到它
-
+<br/>
 `cd documents`
 `git clone https://github.com/craii/MyPaper.git && cd MyPaper`
+<br/>
 如此完成后，会在 ~/documents/ 中看到一个 MyPaper  文件夹，其中包含本项目代码和资源。
 
 **创建 release 文件夹：**
+<br/>
 `rm -rf build-macos-release && mkdir build-macos-release && cd build-macos-release`
-
+<br/>
 **配置 release 版本：**
-`
-cmake .. \
-
--DCMAKE_BUILD_TYPE=Release \
-
--DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" \
-
--DCMAKE_OSX_DEPLOYMENT_TARGET=10.15
-`
+<br/>
+`cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" -DCMAKE_OSX_DEPLOYMENT_TARGET=10.15`
+<br/>
 
 **编译 release 版本：**
+<br/>
 `cmake --build . --config Release`
-
+<br/>
 **打包 wallpaper.app 版本：**
+<br/>
 `macdeployqt wallpaper.app -qmldir=..`
-
+<br/>
 
 **APP临时签名，确保有足够的权限：**
 
@@ -91,6 +95,7 @@ cmake .. \
 切换壁纸功能是通过终端执行 AppleScript 实现的，
 读取/保存壁纸等需要访问磁盘
 这些都需要需要权限。qt自动签名可能会导致无法获取这些权限，从而无法实现切换壁纸。
+<br/>
 `codesign --force --deep --sign - YourAppName.app`
 
 
