@@ -21,6 +21,7 @@ wallpapaer app Pap.er temporary fix
 项目使用的是QT 6.10.1 (windows: MingW13.1.0, macOS: gcc), 因在 macOS 中使用低于 6 的 QT 会不可避免在编译时自动添加 AGL，一个macOS已经弃用的动态连接库，导致编译失败。不是不能解决，但为什么要浪费时间呢？前往官网下载QT安装完成后，应该能够在开始菜单中找到。
 <img width="630" height="623" alt="Snipaste_2026-01-01_12-34-19" src="https://github.com/user-attachments/assets/c204fab3-476c-4e84-8a24-5b98dea4d8b1" />
 <img width="650" height="585" alt="Snipaste_2026-01-01_12-35-56" src="https://github.com/user-attachments/assets/f137ebea-87b0-4081-b08c-3d21684b0d43" />
+<br/>
 使用QT自带的终端(不是cmd! 不是cmd! 不是cmd!)，使用这个终端 ，QT会自动链接需要的动态库。
 
 以下操作在 QT 自带的终端中完成：
@@ -49,7 +50,7 @@ wallpapaer app Pap.er temporary fix
 将 MyPaper 文件夹中的 app_icon.ico 、 app_icon.png 拷贝到 build-release 文件夹中。 此时，如果要分享，把build-release整个文件夹拷走就行了。
 
 
-## Windows:
+## macOS:
 以下命令在终端(terminal)中执行即可:
 检查QT版本：
 
