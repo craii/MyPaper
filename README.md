@@ -27,6 +27,7 @@ wallpapaer app Pap.er temporary fix
 ` D:`
 
 **拉取仓库**
+<br/>
 ` git clone https://github.com/craii/MyPaper.git && cd MyPaper `
 
 
