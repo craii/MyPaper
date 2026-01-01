@@ -1,4 +1,4 @@
-# MyPaper
+# MyPaper (Mac App Pap.er temporary substitution)
 <img width="251" height="253" alt="app_icon" src="https://github.com/user-attachments/assets/1d66cb8a-e14d-498d-be60-eed3e6eedb91" />
 
 
