@@ -1,5 +1,6 @@
 # MyPaper
-<img width="1004" height="1012" alt="app_icon_1024" src="https://github.com/user-attachments/assets/a3f3af6c-f120-4858-b9a2-c3f9d252e41a" />
+<img width="251" height="253" alt="app_icon" src="https://github.com/user-attachments/assets/1d66cb8a-e14d-498d-be60-eed3e6eedb91" />
+
 
 wallpapaer app Pap.er temporary fix
 
