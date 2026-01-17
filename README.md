@@ -30,11 +30,13 @@ wallpaper app Pap.er temporary fix <br/>
 
 # App下载
 你可以在releases section 中下载适用于windows或mac的版本
+
 [**Releases**](https://github.com/craii/MyPaper/releases)
 
 
 # App编译
 
-[**App端说明与编译方式**](https://github.com/craii/MyPaper/blob/main/client/README.md)
-[**Server端编译**](https://github.com/craii/MyPaper/blob/main/server/README.md)
+**App(Windows and macOS)**: [**App端说明与编译方式**](https://github.com/craii/MyPaper/blob/main/client/README.md)
+
+**Server(Linux)**: [**Server端编译**](https://github.com/craii/MyPaper/blob/main/server/README.md)
 
