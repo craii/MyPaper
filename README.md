@@ -38,5 +38,5 @@ wallpaper app Pap.er temporary fix <br/>
 
 **App(Windows and macOS)**: [**App端说明与编译方式**](https://github.com/craii/MyPaper/blob/main/client/README.md)
 
-**Server(Linux)**: [**Server端编译**](https://github.com/craii/MyPaper/blob/main/server/README.md)
+**Server(Linux: rhel fedora centos anolis)**: [**Server端编译**](https://github.com/craii/MyPaper/blob/main/server/README.md)
 
