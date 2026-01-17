@@ -2,7 +2,8 @@
 <img width="251" height="253" alt="app_icon" src="https://github.com/user-attachments/assets/1d66cb8a-e14d-498d-be60-eed3e6eedb91" />
 
 
-wallpaper app Pap.er temporary fix
+wallpaper app Pap.er temporary fix <br/>
+
 因最爱壁纸软件 [**Pap.er**](https://www.paperapp.net/) 崩溃后作者不修复的无奈之作。 适配 **macOS** 和 **Windows** 。
 
 # 初衷
