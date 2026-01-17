@@ -3,6 +3,7 @@
 
 
 wallpaper app Pap.er temporary fix
+因最爱壁纸软件 [**Pap.er**](https://www.paperapp.net/) 崩溃后作者不修复的无奈之作。 适配 **macOS** 和 **Windows** 。
 
 # 初衷
 做这个东西是出于对 Pap.er app 的喜爱，也是作为学习 cpp 之后的练习(否则我实在找不到任何理由用cpp写网络服务)。升级 macOS 26后，因崩溃而无法继续使用的 Pap.er ，给开发者 发送邮件  也如石沉大海，没有回应。 因而写了临时替代版。
