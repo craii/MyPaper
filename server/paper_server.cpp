@@ -133,8 +133,9 @@ void RefreshRequestHandler::handleRequest(HTTPServerRequest& request,
             }
         }
 
-        // 检查是否为测试 token
-        if (token != "TEST_TOKENS")
+        // 验证 token
+        bool token_exist = this->TokenController->exists(token);
+        if (!token_exist)
         {
             response.setStatus(HTTPResponse::HTTP_UNAUTHORIZED);
             json.set("code", 401);

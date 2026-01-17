@@ -112,8 +112,8 @@ void ImageController::scan_folder(const string& path)
 
         // 简单判断图片格式
         if (ext == ".jpg" || ext == ".jpeg" ||
-            ext == ".png" || ext == ".bmp" ||
-            ext == ".webp") {
+            ext == ".png" || ext == ".JPG" ||
+            ext == ".JPEG"|| ext == ".PNG") {
             
             
             if (path == full_pic_path) 
@@ -419,7 +419,7 @@ vector<string> ImageController::walk_folder()
     }
     
     // 支持的图片扩展名
-    unordered_set<string> valid_extensions = { ".jpg", ".jpeg", ".png"};
+    unordered_set<string> valid_extensions = { ".jpg", ".jpeg", ".png", ".JPG", ".JPRG", ".PNG"};
     
     // 构建 half_pic_path 中已存在文件的集合(不含扩展名)
     unordered_set<string> half_files;
