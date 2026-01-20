@@ -44,6 +44,10 @@ QVariantMap SettingsBackend::validateAndSave(
     QString folderError;
     QString serverError;
 
+    qDebug() << wallpaperFolder << "\n";
+    qDebug() << serverUrl << "\n";
+    qDebug() << token << "\n";
+
     // 验证壁纸文件夹
     bool folderValid = true;
     if (!wallpaperFolder.isEmpty()) {
@@ -206,7 +210,7 @@ bool SettingsBackend::validateServerConfig(
 
     // 验证 Token 格式
     if (hasToken) {
-        if (token.length() < 10) {
+        if (token.length() < 5) {
             errorMsg = "访问令牌格式不正确（长度过短）";
             return false;
         }

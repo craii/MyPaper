@@ -13,7 +13,6 @@ ApplicationWindow {
 
     color: "#1a1a1a"
 
-
     // 添加方法供 C++ 调用
     function openSettings() {
         console.log("Opening settings from tray")
@@ -22,14 +21,22 @@ ApplicationWindow {
 
     // 窗口关闭事件 - 最小化到托盘而不是退出
     onClosing: function(close) {
-        close.accepted = false  // 阻止窗口关闭
-        root.hide()  // 隐藏窗口
+        close.accepted = false
+        root.hide()
         console.log("Window minimized to tray")
     }
 
-
     // 组件加载完成后启动自动更换壁纸
     Component.onCompleted: {
+        // 从设置中读取服务器配置
+        var serverUrl = settingsBackend.getServerUrl()
+        var token = settingsBackend.getToken()
+
+        if (serverUrl !== "" && token !== "") {
+            console.log("Server configured, updating backend")
+            photoBackend.setServerConfig(serverUrl, token)
+        }
+
         // 从设置中读取更新间隔并启动定时器
         var intervalMinutes = settingsBackend.getUpdateIntervalMinutes()
         if (intervalMinutes > 0) {
@@ -40,19 +47,13 @@ ApplicationWindow {
 
     onActiveChanged: {
         if(!active){
-            // root.visible=false
             root.close()
-        }
-        else{
-            // systemTray.hide()
         }
     }
 
     onVisibleChanged: {
         if (!visible) {
-            //root.visible=false
             root.close()
-
         }
     }
 
@@ -73,14 +74,23 @@ ApplicationWindow {
             })
 
             // 监听设置保存成功
-            item.settingsSaved.connect(function(newFolderPath) {
+            item.settingsSaved.connect(function(newFolderPath, serverUrl, token) {
                 if (newFolderPath !== "") {
                     console.log("Updating wallpaper folder to:", newFolderPath)
                     photoBackend.set_m_photoDirectory_base(newFolderPath)
-
-                    // 根据当前标签页重新加载
-                    photoBackend.switchTab(tabBar.currentIndex)
                 }
+
+                // 更新服务器配置
+                if (serverUrl !== "" && token !== "") {
+                    console.log("Updating server config")
+                    photoBackend.setServerConfig(serverUrl, token)
+                } else {
+                    console.log("Clearing server config")
+                    photoBackend.setServerConfig("", "")
+                }
+
+                // 根据当前标签页重新加载
+                photoBackend.switchTab(tabBar.currentIndex)
 
                 // 更新自动更换壁纸的时间间隔
                 var intervalMinutes = settingsBackend.getUpdateIntervalMinutes()
@@ -114,31 +124,6 @@ ApplicationWindow {
             }
 
             Item { Layout.fillWidth: true }
-
-
-            //test 最小化按钮
-            // Button {
-            //                Layout.preferredWidth: 36
-            //                Layout.preferredHeight: 36
-            //                background: Rectangle {
-            //                    color: "transparent"
-            //                    radius: 18
-            //                }
-            //                contentItem: Text {
-            //                    text: "−"
-            //                    font.pixelSize: 28
-            //                    color: "#888888"
-            //                    horizontalAlignment: Text.AlignHCenter
-            //                    verticalAlignment: Text.AlignVCenter
-            //                }
-            //                onClicked: {
-            //                    console.log("Minimize to tray clicked")
-            //                    root.hide()
-            //                }
-            //            }
-
-
-
 
             // 设置按钮
             Button {
@@ -224,7 +209,6 @@ ApplicationWindow {
         anchors.bottom: parent.bottom
         clip: true
 
-        // 隐藏滚动条
         ScrollBar.vertical.policy: ScrollBar.AlwaysOff
         ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
 
@@ -235,13 +219,16 @@ ApplicationWindow {
             cellHeight: 220
             model: photoModel
 
-
             onContentYChanged: {
                 if (contentY + height >= contentHeight - 50) {
-                    photoBackend.loadMorePhotos()
+                    // 只在本地模式下加载更多
+                    var serverUrl = settingsBackend.getServerUrl()
+                    var token = settingsBackend.getToken()
+                    if (serverUrl === "" || token === "" || tabBar.currentIndex !== 1) {
+                        photoBackend.loadMorePhotos()
+                    }
                 }
             }
-
 
             delegate: Item {
                 width: photoGrid.cellWidth
@@ -276,7 +263,7 @@ ApplicationWindow {
                     }
 
                     Button {
-                        z: 11 // 要比MouseArea的z大，不然会被遮住，不能点击
+                        z: 11
                         id: settingBtn
                         anchors.top: parent.top
                         anchors.right: parent.right
@@ -285,20 +272,30 @@ ApplicationWindow {
                         visible: false
 
                         onClicked: {
-                            console.log("鼠标进入按钮")
                             console.log("Button clicked:", index)
                             photoBackend.onPhotoClicked(index)
-                            photoBackend.setWallPaper(model.imageUrl)
-                            photoBackend.copyImage(model.imageUrl)
+
+                            // 检查是否是服务器模式
+                            var serverUrl = settingsBackend.getServerUrl()
+                            var token = settingsBackend.getToken()
+
+                            if (serverUrl !== "" && token !== "" && tabBar.currentIndex === 1) {
+                                // 服务器模式：下载并设置壁纸
+                                console.log("Server mode: downloading image")
+                                photoBackend.downloadAndSetWallpaper(model.imageUrl)
+                            } else {
+                                // 本地模式：直接设置壁纸
+                                console.log("Local mode: setting wallpaper directly")
+                                photoBackend.setWallPaper(model.imageUrl)
+                                photoBackend.copyImage(model.imageUrl)
+                            }
                         }
 
-                        // 自定义背景（圆角 + 半透明黑色）
                         background: Rectangle {
-                            radius: height / 2          // 圆角（胶囊形）
-                            color: "#80000000"          // 半透明黑色（80=50%透明）
+                            radius: height / 2
+                            color: "#80000000"
                         }
 
-                        // 自定义文字（白色）
                         contentItem: Text {
                             text: "设置"
                             color: "white"
@@ -307,23 +304,20 @@ ApplicationWindow {
                             verticalAlignment: Text.AlignVCenter
                         }
 
-                        // 可选：手动控制按钮大小
                         width: 40
                         height: 24
                     }
 
                     MouseArea {
-                        z: 10 // 要比Button的z小，不然会遮住，导致不能点击
+                        z: 10
                         anchors.fill: parent
                         hoverEnabled: true
 
                         onEntered: {
-                            //console.log("鼠标进入")
                             settingBtn.visible = true
                         }
 
                         onExited: {
-                            //console.log("鼠标离开")
                             settingBtn.visible = false
                         }
                     }
@@ -332,7 +326,7 @@ ApplicationWindow {
         }
     }
 
-    // 左下角刷新按钮 - 固定在整个列表左下角
+    // 左下角刷新按钮
     Rectangle {
         width: 50
         height: 50
@@ -358,4 +352,5 @@ ApplicationWindow {
             }
         }
     }
-}
+
+}//window

@@ -14,6 +14,12 @@
 #include <QProcess>
 #include <QTimer>
 #include <QMessageBox>
+#include <QNetworkAccessManager>
+#include <QNetworkRequest>
+#include <QNetworkReply>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
 
 // 照片数据模型
 class PhotoModel : public QAbstractListModel
@@ -40,7 +46,7 @@ public:
     // 清空照片
     Q_INVOKABLE void clearPhotos();
 
-    // 加载示例数据（已废弃，保留接口兼容性）
+    // 加载示例数据(已废弃,保留接口兼容性)
     Q_INVOKABLE void loadSampleData();
 
 private:
@@ -75,7 +81,7 @@ public:
     Q_INVOKABLE void set_application_dir(const QString &dir);
     Q_INVOKABLE QString get_application_dir();
 
-    // 设置壁纸基础目录（可从QML调用）
+    // 设置壁纸基础目录(可从QML调用)
     Q_INVOKABLE void set_m_photoDirectory_base(const QString &dir);
     Q_INVOKABLE QString get_m_photoDirectory_base();
 
@@ -102,27 +108,32 @@ public:
     // 重新扫描当前目录
     Q_INVOKABLE void rescanDirectory();
 
-    //设置壁纸
+    // 设置壁纸
     Q_INVOKABLE void setWallPaper(const QString &path_to_image) const;
 
-    //移动壁纸到历史
+    // 移动壁纸到历史
     Q_INVOKABLE bool copyImage(const QString &sourcePath);
 
-    //设置app默认尺寸
+    // 设置app默认尺寸
     Q_INVOKABLE void SET_APP_WIDTH(int APP_WIDTH);
     Q_INVOKABLE void SET_APP_HEIGTH(int APP_HEIGTH);
 
-    //读取app尺寸
+    // 读取app尺寸
     Q_INVOKABLE int get_APP_WIDTH();
     Q_INVOKABLE int get_APP_HEIGTH();
 
-    //设置APP POSITION
+    // 设置APP POSITION
     Q_INVOKABLE void SET_APP_POSITION_X(int APP_POSITION_X);
     Q_INVOKABLE void SET_APP_POSITION_Y(int APP_POSITION_Y);
 
-    //读取APP POSITION
-    Q_INVOKABLE  int get_APP_POSITION_X();
+    // 读取APP POSITION
+    Q_INVOKABLE int get_APP_POSITION_X();
     Q_INVOKABLE int get_APP_POSITION_Y();
+
+    // ===== 新增：服务器相关方法 =====
+    Q_INVOKABLE void setServerConfig(const QString &serverUrl, const QString &token);
+    Q_INVOKABLE void fetchWallpapersFromServer();
+    Q_INVOKABLE void downloadAndSetWallpaper(const QString &imageUrl);
 
 signals:
     // 通知 QML 更新
@@ -132,9 +143,17 @@ signals:
     void photoDirectoryChanged();
     void errorOccurred(const QString &errorMessage);
 
+    // 新增：服务器请求相关信号
+    void serverDataLoaded();
+    void serverError(const QString &error);
+
 private slots:
     void onDirectoryChanged(const QString &path);
     void onAutoWallpaperTimeout();
+
+    // 新增：网络请求响应槽
+    void onWallpapersFetched();
+    void onImageDownloaded();
 
 private:
     PhotoModel *m_photoModel;
@@ -173,18 +192,36 @@ private:
     // 从文件路径提取文件名作为标题
     QString extractTitle(const QString &filePath) const;
 
-    //APP的安装位置
+    // APP的安装位置
     QString application_dir;
 
-    //APP SIZE
+    // APP SIZE
     int app_width;
     int app_height;
 
-    //APP POSITION
+    // APP POSITION
     int app_position_x;
     int app_position_y;
 
+    // ===== 新增：服务器相关成员变量 =====
+    QString m_serverUrl;
+    QString m_serverToken;
+    QNetworkAccessManager *m_networkManager;
 
+    // 存储服务器返回的图片URL列表
+    QStringList m_serverImageUrls;
+
+    // 当前正在下载的图片信息
+    QString m_currentDownloadUrl;
+    int m_currentDownloadIndex;
+
+    // 缓存目录
+    QString m_cacheDirectory;
+
+    // 辅助方法
+    void ensureCacheDirectory();
+    QString extractImageNameFromUrl(const QString &url);
+    void loadPhotosFromServer();
 };
 
 #endif // PHOTOBACKEND_H

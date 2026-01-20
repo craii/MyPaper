@@ -13,13 +13,10 @@ ApplicationWindow {
 
     color: "#1a1a1a"
 
-    // 自定义信号
+    // 自定义信号 - 修改为传递服务器配置参数
     signal windowClosed()
+    signal settingsSaved(string newFolderPath, string serverUrl, string token)
 
-    // 自定义保存成功信号（传递新的文件夹路径）
-    signal settingsSaved(string newFolderPath)
-
-    // 点击窗口外部关闭
     flags: Qt.Window | Qt.FramelessWindowHint
 
     onActiveChanged: {
@@ -32,18 +29,16 @@ ApplicationWindow {
     onVisibleChanged: {
         if (visible) {
             console.log("Settings window opened")
-            // 加载当前设置
             settingsBackend.loadSettings()
         } else {
             console.log("Settings window closed")
         }
     }
 
-    // 背景遮罩层（点击关闭）
     MouseArea {
         anchors.fill: parent
         onClicked: {
-            // 点击空白处不关闭，只有点击外部才关闭
+            // 点击空白处不关闭
         }
     }
 
@@ -74,7 +69,6 @@ ApplicationWindow {
 
                 Item { Layout.fillWidth: true }
 
-                // 关闭按钮
                 Button {
                     Layout.preferredWidth: 36
                     Layout.preferredHeight: 36
@@ -126,7 +120,7 @@ ApplicationWindow {
                     }
 
                     Text {
-                        text: "设置存放壁纸的根目录，将自动创建 latest、hotest、history 子文件夹"
+                        text: "设置存放壁纸的根目录,将自动创建 latest、hotest、history 子文件夹"
                         font.pixelSize: 12
                         color: "#888888"
                         wrapMode: Text.WordWrap
@@ -306,7 +300,7 @@ ApplicationWindow {
                     }
 
                     Text {
-                        text: "配置壁纸服务器地址和访问令牌"
+                        text: "配置壁纸服务器地址和访问令牌, 留空则读取本地hotest文件夹中的图片"
                         font.pixelSize: 12
                         color: "#888888"
                         wrapMode: Text.WordWrap
@@ -387,16 +381,36 @@ ApplicationWindow {
                             }
                         }
                     }
+                    Text {
+                        text: "项目地址"
+                        font.pixelSize: 14
+                        color: "#ffffff"
+                        font.bold: true
+                    }
 
                     Text {
                         id: serverValidationText
-                        text: ""
+                        text: "<a href=\"https://github.com/craii/MyPaper\">https://github.com/craii/MyPaper</a>"
                         font.pixelSize: 12
-                        color: "#ff4444"
+                        color: "#ffffff"
                         visible: text !== ""
                         Layout.fillWidth: true
                         wrapMode: Text.WordWrap
+                        textFormat: Text.RichText
+                        linkColor: "#ffffff"
+                        onLinkActivated: {
+                            Qt.openUrlExternally(link)  // 使用默认浏览器打开链接
+                        }
+
+                        // 可选：鼠标悬停时显示手型光标
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            acceptedButtons: Qt.NoButton  // 不拦截点击，让 Text 的 onLinkActivated 处理
+                        }
                     }
+
+
                 }
             }
         }
@@ -465,19 +479,16 @@ ApplicationWindow {
         }
     }
 
-    // 保存设置
+    // 保存设置 - 修改为返回服务器配置
     function saveSettings() {
-        // 清除之前的错误信息
         folderValidationText.text = ""
         serverValidationText.text = ""
 
-        // 验证并保存
         var folderPath = wallpaperFolderInput.text.trim()
         var serverUrl = serverUrlInput.text.trim()
         var token = tokenInput.text.trim()
         var interval = updateIntervalCombo.currentIndex
 
-        // 调用后端验证和保存
         var result = settingsBackend.validateAndSave(
             folderPath,
             serverUrl,
@@ -488,13 +499,12 @@ ApplicationWindow {
         if (result.success) {
             console.log("Settings saved successfully")
 
-            // 发射信号，通知主窗口更新壁纸文件夹
-            settingsSaved(folderPath)
+            // 发射信号,传递服务器配置参数
+            settingsSaved(folderPath, serverUrl, token)
 
             settingsWindow.close()
             windowClosed()
         } else {
-            // 显示错误信息
             if (result.folderError) {
                 folderValidationText.text = result.folderError
             }

@@ -124,6 +124,10 @@ PhotoBackend::PhotoBackend(QObject *parent)
         qWarning() << "Default photo directory does not exist:" << defaultPath;
         qDebug() << "Please set photo directory using setPhotoDirectory()";
     }
+    //壁纸服务器相关
+    m_networkManager = new QNetworkAccessManager(this);
+    m_cacheDirectory = m_photoDirectory_base + "/cache";
+    ensureCacheDirectory();
 }
 
 PhotoBackend::~PhotoBackend()
@@ -185,34 +189,42 @@ void PhotoBackend::refreshPhoto(int index)
     rescanDirectory();
 }
 
+// ===== 修改 switchTab 方法 =====
+// 在 switchTab 方法中,修改最热(index=1)的处理逻辑:
+
 void PhotoBackend::switchTab(int tabIndex)
 {
     qDebug() << "Switching to tab:" << tabIndex;
 
-
     m_currentTabIndex = tabIndex;
-    //m_currentStartIndex = 0; // 重置起始索引
+
     if (m_currentTabIndex == 0)
     {
         setPhotoDirectory(m_photoDirectory_base + "/latest");
         qDebug() << "读取文件夹latest: " << m_photoDirectory;
+        refreshPhoto(m_currentTabIndex);
+        sortPhotosByTab();
     }
-    if (m_currentTabIndex == 1)
+    else if (m_currentTabIndex == 1)
     {
-        setPhotoDirectory(m_photoDirectory_base + "/hotest");
-        qDebug() << "读取文件夹hotest: " << m_photoDirectory;
+        // 检查是否配置了服务器
+        if (!m_serverUrl.isEmpty() && !m_serverToken.isEmpty()) {
+            qDebug() << "Server configured, loading from server";
+            loadPhotosFromServer();
+        } else {
+            qDebug() << "No server config, loading from local hotest folder";
+            setPhotoDirectory(m_photoDirectory_base + "/hotest");
+            qDebug() << "读取文件夹hotest: " << m_photoDirectory;
+            refreshPhoto(m_currentTabIndex);
+            sortPhotosByTab();
+        }
     }
-    if (m_currentTabIndex == 2)
+    else if (m_currentTabIndex == 2)
     {
         setPhotoDirectory(m_photoDirectory_base + "/history");
-        //qDebug() << "读取文件夹history: " << m_photoDirectory;
+        refreshPhoto(m_currentTabIndex);
+        sortPhotosByTab();
     }
-
-    refreshPhoto(m_currentTabIndex);
-
-    // // 根据标签重新排序和显示照片
-
-    sortPhotosByTab();
 }
 
 void PhotoBackend::loadMorePhotos()
@@ -620,6 +632,258 @@ bool PhotoBackend::copyImage(const QString &sourcePath)
 
     return success;
 }
+
+
+// ===== 新增方法实现 =====
+
+void PhotoBackend::setServerConfig(const QString &serverUrl, const QString &token)
+{
+    m_serverUrl = serverUrl.trimmed();
+    m_serverToken = token.trimmed();
+
+    qDebug() << "Server config updated - URL:" << m_serverUrl << "Token set:" << (!m_serverToken.isEmpty());
+}
+
+void PhotoBackend::ensureCacheDirectory()
+{
+    QDir cacheDir(m_cacheDirectory);
+    if (!cacheDir.exists()) {
+        if (cacheDir.mkpath(".")) {
+            qDebug() << "Cache directory created:" << m_cacheDirectory;
+        } else {
+            qWarning() << "Failed to create cache directory:" << m_cacheDirectory;
+        }
+    }
+}
+
+void PhotoBackend::fetchWallpapersFromServer()
+{
+    if (m_serverUrl.isEmpty() || m_serverToken.isEmpty()) {
+        qWarning() << "Server URL or token is empty, cannot fetch wallpapers";
+        return;
+    }
+
+    qDebug() << "Fetching wallpapers from server:" << m_serverUrl;
+
+    emit photoLoadingStarted();
+
+    QUrl url(m_serverUrl + "/wallpaper");
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
+
+    QString postData = QString("token=%1").arg(m_serverToken);
+
+    QNetworkReply *reply = m_networkManager->post(request, postData.toUtf8());
+
+    connect(reply, &QNetworkReply::finished, this, &PhotoBackend::onWallpapersFetched);
+}
+
+void PhotoBackend::onWallpapersFetched()
+{
+    QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
+
+    if (!reply) {
+        emit photoLoadingFinished();
+        return;
+    }
+
+    if (reply->error() != QNetworkReply::NoError) {
+        QString error = QString("Network error: %1").arg(reply->errorString());
+        qWarning() << error;
+        emit serverError(error);
+        emit photoLoadingFinished();
+        reply->deleteLater();
+        return;
+    }
+
+    QByteArray responseData = reply->readAll();
+    reply->deleteLater();
+
+    qDebug() << "Server response:" << responseData;
+
+    QJsonDocument jsonDoc = QJsonDocument::fromJson(responseData);
+    if (!jsonDoc.isObject()) {
+        QString error = "Invalid JSON response";
+        qWarning() << error;
+        emit serverError(error);
+        emit photoLoadingFinished();
+        return;
+    }
+
+    QJsonObject jsonObj = jsonDoc.object();
+
+    if (jsonObj["code"].toInt() != 200) {
+        QString error = "Server returned error code: " + QString::number(jsonObj["code"].toInt());
+        qWarning() << error;
+        emit serverError(error);
+        emit photoLoadingFinished();
+        return;
+    }
+
+    // 获取 data_half 数组
+    QJsonArray dataHalf = jsonObj["data_half"].toArray();
+
+    if (dataHalf.isEmpty()) {
+        qWarning() << "No images in data_half array";
+        emit photoLoadingFinished();
+        return;
+    }
+
+    // 清空现有数据
+    m_photoModel->clearPhotos();
+    m_serverImageUrls.clear();
+
+    // 加载服务器图片列表
+    for (const QJsonValue &value : dataHalf) {
+
+        //添加token以便完成请求
+        QString imageUrl = value.toString() + "?token=" + m_serverToken;
+        m_serverImageUrls.append(imageUrl);
+
+        // 提取图片名称作为标题
+        QString title = extractImageNameFromUrl(imageUrl);
+
+        // 生成随机的点赞数和浏览量(模拟数据)
+        int likes = QRandomGenerator::global()->bounded(100, 5000);
+        int views = QRandomGenerator::global()->bounded(500, 30000);
+
+        // 添加到模型中
+        //qDebug() <<"服务器图片：" << imageUrl << "\n";
+        m_photoModel->addPhoto(imageUrl, title, likes, views);
+    }
+
+    qDebug() << "Loaded" << m_serverImageUrls.count() << "images from server";
+
+    emit serverDataLoaded();
+    emit photoLoadingFinished();
+}
+
+QString PhotoBackend::extractImageNameFromUrl(const QString &url)
+{
+    // 从 URL 中提取文件名
+    // 例如: https://localhost/images/half_size_images/half_xxx.jpg -> half_xxx
+    QUrl qUrl(url);
+    QString path = qUrl.path();
+    QFileInfo fileInfo(path);
+    return fileInfo.baseName();
+}
+
+void PhotoBackend::downloadAndSetWallpaper(const QString &imageUrl)
+{
+    if (m_serverUrl.isEmpty() || m_serverToken.isEmpty()) {
+        qWarning() << "Server URL or token is empty, cannot download image";
+        return;
+    }
+
+    // 从 half_xxx.jpg 提取出中间的ID部分
+    // 例如: half_3a552186e16e48388c49640769332185.jpg -> 3a552186e16e48388c49640769332185
+    QString imageName = extractImageNameFromUrl(imageUrl);
+
+    // 移除 "half_" 前缀
+    if (imageName.startsWith("half_")) {
+        imageName = imageName.mid(5); // 去掉前5个字符 "half_"
+    }
+
+    // 从原始URL中提取文件扩展名
+    QFileInfo urlInfo(imageUrl);
+    QString extension = urlInfo.suffix();
+    if (extension.isEmpty()) {
+        extension = "jpg"; // 默认扩展名
+    }
+
+    // 构建完整图片的URL 不用再加token，因为 onWallpapersFetched() 里面 已经加了 + "?token=" + m_serverToken 即 下方的 【extension】已经含token
+    QString fullImageUrl = m_serverUrl + "/images/full_size_images/" + imageName + "." + extension ;
+
+    qDebug() << "Downloading full image from:" << fullImageUrl;
+
+    QNetworkRequest request{(QUrl(fullImageUrl))};
+    QNetworkReply *reply = m_networkManager->get(request);
+
+    m_currentDownloadUrl = fullImageUrl;
+
+    connect(reply, &QNetworkReply::finished, this, &PhotoBackend::onImageDownloaded);
+}
+
+void PhotoBackend::onImageDownloaded()
+{
+    QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
+
+    if (!reply) {
+        return;
+    }
+
+    if (reply->error() != QNetworkReply::NoError) {
+        QString error = QString("Image download error: %1").arg(reply->errorString());
+        qWarning() << error;
+        emit serverError(error);
+        reply->deleteLater();
+        return;
+    }
+
+    QByteArray imageData = reply->readAll();
+    reply->deleteLater();
+
+    if (imageData.isEmpty()) {
+        qWarning() << "Downloaded image data is empty";
+        return;
+    }
+
+    // 从URL中提取文件名
+    QUrl url(m_currentDownloadUrl);
+    QString path = url.path();
+    QFileInfo fileInfo(path);
+    QString fileName = fileInfo.fileName();
+
+    // 移除token参数
+    int queryIndex = fileName.indexOf('?');
+    if (queryIndex != -1) {
+        fileName = fileName.left(queryIndex);
+    }
+
+    // 保存到 hotest 文件夹
+    QString savePath = m_photoDirectory_base + "/hotest/" + fileName;
+
+    QFile file(savePath);
+    if (file.open(QIODevice::WriteOnly)) {
+        file.write(imageData);
+        file.close();
+
+        qDebug() << "Image saved to:" << savePath;
+
+        // 设置为壁纸
+        QString imageUrl = QUrl::fromLocalFile(savePath).toString();
+        setWallPaper(imageUrl);
+
+        // 复制到历史
+        copyImage(imageUrl);
+
+    } else {
+        qWarning() << "Failed to save image to:" << savePath;
+    }
+}
+
+void PhotoBackend::loadPhotosFromServer()
+{
+    qDebug() << "Loading photos from server mode";
+
+    emit photoLoadingStarted();
+
+    // 清空现有数据
+    m_photoModel->clearPhotos();
+    m_allPhotoPaths.clear();
+    m_currentStartIndex = 0;
+
+    // 从服务器获取图片列表
+    fetchWallpapersFromServer();
+}
+
+
+
+
+
+
+
+
 
 //设置app默认尺寸
 void PhotoBackend::SET_APP_WIDTH(int APP_WIDTH)
