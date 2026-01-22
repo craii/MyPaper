@@ -138,6 +138,14 @@ server 端命令行工具，用于向 MyPaper 提供：
 }
 ```
 
+测试语法是否正确
+`sudo nginx -t`
+
+如果 OK，重载配置（不中断服务）
+`sudo systemctl reload nginx`
+
+
+
 ## 使用PaperServer
 此时，可以将全尺寸壁纸上传到 `full_size_images` 
 
