@@ -161,6 +161,8 @@ int64_t ImageController::compress_picture(const std::string& source_path,
     try {
         // 1. 读取图片（保持原始通道和位深）
         cv::Mat image = cv::imread(source_path, cv::IMREAD_UNCHANGED);
+        // 保存缩小后的图片，使其与app列表图片尺寸相同375*220
+        cv::Mat image_resized_to_list_cell_size;
         if (image.empty()) {
             std::cerr << "[ERROR] Failed to load image: " << source_path << std::endl;
             return -1;
@@ -239,6 +241,7 @@ int64_t ImageController::compress_picture(const std::string& source_path,
                 cv::cvtColor(image, image, cv::COLOR_BGRA2BGR);
             }
             
+
             bool success = cv::imwrite(new_dest, image, compression_params);
             if (!success) {
                 std::cerr << "[ERROR] Failed to save compressed image" << std::endl;
@@ -249,7 +252,9 @@ int64_t ImageController::compress_picture(const std::string& source_path,
         }
 
         // 4. 保存压缩后的图片
-        bool success = cv::imwrite(dest_path, image, compression_params);
+        //w * h = 375 * 220
+        cv::resize(image, image_resized_to_list_cell_size, cv::Size(375, 220));
+        bool success = cv::imwrite(dest_path, image_resized_to_list_cell_size, compression_params);
         if (!success) {
             std::cerr << "[ERROR] Failed to save compressed image" << std::endl;
             return -1;
@@ -259,7 +264,7 @@ int64_t ImageController::compress_picture(const std::string& source_path,
         if (max_size_bytes > 0) {
             int64_t current_size = fs::file_size(dest_path);
             if (current_size > max_size_bytes) {
-                return adjust_size_to_target(image, dest_path, ext, max_size_bytes, quality_value);
+                return adjust_size_to_target(image_resized_to_list_cell_size, dest_path, ext, max_size_bytes, quality_value);
             }
         }
 

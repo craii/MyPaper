@@ -185,7 +185,7 @@ void RefreshRequestHandler::handleRequest(HTTPServerRequest& request,
                 int64_t result_size = Controller->compress_picture(
                     source_path, 
                     dest_path,
-                    ImageController::Quality::BROKEN
+                    ImageController::Quality::MEDIUM
                 );
 
                 Object file_result;
