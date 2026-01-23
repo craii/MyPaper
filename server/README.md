@@ -147,7 +147,7 @@ server 端命令行工具，用于向 MyPaper 提供：
 
 
 ## 使用PaperServer
-此时，可以将全尺寸壁纸上传到 `full_size_images` 
+此时，可以将全尺寸壁纸上传到 `full_size_images` ,需要注意，为了最好的显示效果，壁纸的宽高比最好是（375, 220）。
 
 
 **启动程序**
