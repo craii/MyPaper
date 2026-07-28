@@ -4,6 +4,8 @@
 
 wallpaper app Pap.er temporary fix <br/>
 
+2026-06-23 已作者已更新【[5.4.5](https://www.paperapp.net/?lang=zh-Hans-CN)】版本，已解决崩溃问题，本项目完成使命。
+
 因最爱壁纸软件 [**Pap.er**](https://www.paperapp.net/) 崩溃后作者不修复的无奈之作。 适配 **macOS** 和 **Windows** 。
 
 # 初衷
